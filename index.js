@@ -47,6 +47,7 @@ class Component {
 class TodoList extends Component {
   constructor(TodoListId=0){
     super();
+    this.addTask = new AddTask(this.createOnAddTask());
     this.localStorageFieldName = `TodoList_${TodoListId}_state`;
     try{
       const saved_state = JSON.parse(localStorage.getItem(this.localStorageFieldName));
@@ -61,13 +62,12 @@ class TodoList extends Component {
     
     this.state = {
       tasks: [
-        new Task("Сделать домашку", this.createOnDeleteTask.bind(this)),
-        new Task("Сделать практику", this.createOnDeleteTask.bind(this)),
-        new Task("Пойти домой", this.createOnDeleteTask.bind(this))
+        { title: "Сделать домашку", progress: false },
+        { title: "Сделать практику", progress: false },
+        { title: "Пойти домой", progress: false }
       ],
       newTaskName: ""
     };
-    this.addTask = new AddTask(this.createOnAddTask());
     this.saveState();
   }
 
@@ -78,7 +78,7 @@ class TodoList extends Component {
 
   createOnAddTask() {
     return (function() {
-      this.state.tasks.push(new Task(this.state.newTaskName, this.createOnDeleteTask.bind(this)));
+      this.state.tasks.push({ title: this.state.newTaskName, progress: false });
       this.saveState();
       this.update();
     }).bind(this);
@@ -119,16 +119,12 @@ class TodoList extends Component {
         ),
         createElement("button", { id: "add-btn" }, "+",
         [
-          { eventName: "click", callback: this.addTask.state.OnAddTask }
+          { eventName: "click", callback: this.addTask.OnAddTask }
         ]
         ),
       ]),
       createElement("ul", { id: "todos" }, this.state.tasks.map(
-        v => createElement("li", {}, [
-          createElement("input", { type: "checkbox" }, {}, [{eventName: "change", callback: v.createOnTaskChecked()}]),
-          createElement("label", {}, v.state.title),
-          createElement("button", {}, "🗑️", [{eventName: "click", callback: v.OnDelete}])
-        ])) 
+        v => (new Task(this.createOnDeleteTask.bind(this), this.saveState.bind(this), v)).render()) 
       ),
     ]);
   }
@@ -137,26 +133,31 @@ class TodoList extends Component {
 class AddTask extends Component {
   constructor(OnAddTask) {
     super();
-    this.state = {
-      OnAddTask: OnAddTask
-    }
+    this.OnAddTask = OnAddTask;
   }
 }
 
 class Task extends Component {
-  constructor(title, OnDelete, progress=false) {
+  constructor(OnDelete, OnChange, state) {
     super();
-    this.state = {
-      title: title,
-      progress: progress
-    }
-    this.OnDelete = OnDelete(this);
+    this.state = state;
+    this.OnDelete = OnDelete(this.state);
+    this.OnChange = OnChange;
+  }
+
+  render() {
+    return createElement("li", {}, [
+      createElement("input", this.state.progress ? { type: "checkbox", checked: "checked" } : { type: "checkbox" }, {}, [{eventName: "change", callback: this.createOnTaskChecked()}]),
+      createElement("label", {}, this.state.title),
+      createElement("button", {}, "🗑️", [{eventName: "click", callback: this.OnDelete}])
+    ])
   }
 
   createOnTaskChecked(){
     return (function(event){
       this.state.progress = !this.state.progress;
       event.target.nextElementSibling.setAttribute('style', this.state.progress ? 'color:#aaa;' : '');
+      this.OnChange();
     }).bind(this);
   }
 }
