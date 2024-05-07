@@ -49,17 +49,18 @@ class TodoList extends Component {
     super();
     this.state = {
       tasks: [
-        {title: "Сделать домашку", progress: false},
-        {title: "Сделать практику", progress: false},
-        {title: "Пойти домой", progress: false}
+        new Task("Сделать домашку", this.createOnDeleteTask.bind(this)),
+        new Task("Сделать практику", this.createOnDeleteTask.bind(this)),
+        new Task("Пойти домой", this.createOnDeleteTask.bind(this))
       ],
       newTaskName: ""
     };
+    this.addTask = new AddTask(this.createOnAddTask());
   }
 
   createOnAddTask() {
     return (function() {
-      this.state.tasks.push({ title: this.state.newTaskName, progress: false });
+      this.state.tasks.push(new Task(this.state.newTaskName, this.createOnDeleteTask.bind(this)));
       this.update();
     }).bind(this);
   }
@@ -80,12 +81,6 @@ class TodoList extends Component {
     }).bind(this);
   }
 
-  createOnTaskChecked(){
-    return (function(event){
-      event.target.nextElementSibling.setAttribute('style', event.target.checked ? 'color:#aaa;' : '');
-    }).bind(this);
-  }
-
   render() {
     return createElement("div", { class: "todo-list" }, [
       createElement("h1", {}, "TODO List"),
@@ -103,18 +98,45 @@ class TodoList extends Component {
         ),
         createElement("button", { id: "add-btn" }, "+",
         [
-          { eventName: "click", callback: this.createOnAddTask() }
+          { eventName: "click", callback: this.addTask.state.OnAddTask }
         ]
         ),
       ]),
       createElement("ul", { id: "todos" }, this.state.tasks.map(
         v => createElement("li", {}, [
-          createElement("input", { type: "checkbox" }, {}, [{eventName: "change", callback: this.createOnTaskChecked()}]),
-          createElement("label", {}, v.title),
-          createElement("button", {}, "🗑️", [{eventName: "click", callback: this.createOnDeleteTask(v)}])
+          createElement("input", { type: "checkbox" }, {}, [{eventName: "change", callback: v.createOnTaskChecked()}]),
+          createElement("label", {}, v.state.title),
+          createElement("button", {}, "🗑️", [{eventName: "click", callback: v.OnDelete}])
         ])) 
       ),
     ]);
+  }
+}
+
+class AddTask extends Component {
+  constructor(OnAddTask) {
+    super();
+    this.state = {
+      OnAddTask: OnAddTask
+    }
+  }
+}
+
+class Task extends Component {
+  constructor(title, OnDelete, progress=false) {
+    super();
+    this.state = {
+      title: title,
+      progress: progress
+    }
+    this.OnDelete = OnDelete(this);
+  }
+
+  createOnTaskChecked(){
+    return (function(event){
+      this.state.progress = !this.state.progress;
+      event.target.nextElementSibling.setAttribute('style', this.state.progress ? 'color:#aaa;' : '');
+    }).bind(this);
   }
 }
 
