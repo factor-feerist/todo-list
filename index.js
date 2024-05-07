@@ -1,4 +1,4 @@
-﻿function createElement(tag, attributes, children, callbacks={}) {
+﻿function createElement(tag, attributes, children, callbacks=[]) {
   const element = document.createElement(tag);
 
   if (attributes) {
@@ -21,8 +21,8 @@
     element.appendChild(children);
   }
 
-  for (let [eventName, callback] in callbacks) {
-    element.addEventListener(eventName, callback);
+  for (let pair of callbacks) {
+    element.addEventListener(pair.eventName, pair.callback);
   }
 
   return element;
@@ -30,6 +30,12 @@
 
 class Component {
   constructor() {
+  }
+
+  update() {
+    const parent = this._domNode.parentElement;
+    parent.removeChild(this._domNode);
+    parent.appendChild(this.getDomNode());
   }
 
   getDomNode() {
@@ -51,12 +57,17 @@ class TodoList extends Component {
     };
   }
 
-  onAddTask() {
-    this.state.tasks.push({ title: this.state.newTaskName, progress: false });
+  createOnAddTask() {
+    return (function() {
+      this.state.tasks.push({ title: this.state.newTaskName, progress: false });
+      this.update();
+    }).bind(this);
   }
 
-  onAddInputChange(event) {
-    this.state.newTaskName = event.target.value;
+  createOnAddInputChange() {
+    return (function(event) {
+      this.state.newTaskName = event.target.value;
+    }).bind(this);
   }
 
   render() {
@@ -68,19 +79,22 @@ class TodoList extends Component {
           type: "text",
           placeholder: "Задание"
         },
+        {},
           [
-            { eventName: "change", callback: this.onAddInputChange }
+            { eventName: "change", callback: this.createOnAddInputChange() }
           ]
         ),
-        createElement("button", { id: "add-btn" }, "+"),
+        createElement("button", { id: "add-btn" }, "+",
+        [
+          { eventName: "click", callback: this.createOnAddTask() }
+        ]
+        ),
       ]),
       createElement("ul", { id: "todos" }, this.state.tasks.map(
         v => createElement("li", {}, [
           createElement("input", { type: "checkbox" }),
           createElement("label", {}, v.title),
-          createElement("button", {}, "🗑️", [
-            { eventName: "click", callback: this.onAddTask }
-          ])
+          createElement("button", {}, "🗑️")
         ])) 
       ),
     ]);
