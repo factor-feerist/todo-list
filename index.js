@@ -45,8 +45,20 @@ class Component {
 }
 
 class TodoList extends Component {
-  constructor(){
+  constructor(TodoListId=0){
     super();
+    this.localStorageFieldName = `TodoList_${TodoListId}_state`;
+    try{
+      const saved_state = JSON.parse(localStorage.getItem(this.localStorageFieldName));
+      console.log(saved_state);
+      if (saved_state !== null){
+        this.state = saved_state;
+        return;
+      }
+    } catch {
+
+    }
+    
     this.state = {
       tasks: [
         new Task("Сделать домашку", this.createOnDeleteTask.bind(this)),
@@ -56,11 +68,18 @@ class TodoList extends Component {
       newTaskName: ""
     };
     this.addTask = new AddTask(this.createOnAddTask());
+    this.saveState();
+  }
+
+  saveState() {
+    const stateString = JSON.stringify(this.state)
+    localStorage.setItem(this.localStorageFieldName, stateString);
   }
 
   createOnAddTask() {
     return (function() {
       this.state.tasks.push(new Task(this.state.newTaskName, this.createOnDeleteTask.bind(this)));
+      this.saveState();
       this.update();
     }).bind(this);
   }
@@ -68,6 +87,7 @@ class TodoList extends Component {
   createOnAddInputChange() {
     return (function(event) {
       this.state.newTaskName = event.target.value;
+      this.saveState();
     }).bind(this);
   }
 
@@ -77,6 +97,7 @@ class TodoList extends Component {
       if (index !== -1) {
         this.state.tasks.splice(index, 1);
       }
+      this.saveState();
       this.update();
     }).bind(this);
   }
