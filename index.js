@@ -72,7 +72,17 @@ class TodoList extends Component {
 
   createOnDeleteTask(task){
     return (function() {
-      this.state.tasks.remove()
+      var index = this.state.tasks.indexOf(task);
+      if (index !== -1) {
+        this.state.tasks.splice(index, 1);
+      }
+      this.update();
+    }).bind(this);
+  }
+
+  createOnTaskChecked(){
+    return (function(event){
+      event.target.nextElementSibling.setAttribute('style', event.target.checked ? 'color:#aaa;' : '');
     }).bind(this);
   }
 
@@ -99,9 +109,9 @@ class TodoList extends Component {
       ]),
       createElement("ul", { id: "todos" }, this.state.tasks.map(
         v => createElement("li", {}, [
-          createElement("input", { type: "checkbox" }),
+          createElement("input", { type: "checkbox" }, {}, [{eventName: "change", callback: this.createOnTaskChecked()}]),
           createElement("label", {}, v.title),
-          createElement("button", {}, "🗑️")
+          createElement("button", {}, "🗑️", [{eventName: "click", callback: this.createOnDeleteTask(v)}])
         ])) 
       ),
     ]);
