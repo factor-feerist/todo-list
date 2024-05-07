@@ -70,6 +70,12 @@ class TodoList extends Component {
     }).bind(this);
   }
 
+  createOnDeleteTask(task){
+    return (function() {
+      this.state.tasks.remove()
+    }).bind(this);
+  }
+
   render() {
     return createElement("div", { class: "todo-list" }, [
       createElement("h1", {}, "TODO List"),
