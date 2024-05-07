@@ -77,7 +77,8 @@ class TodoList extends Component {
         createElement("input", {
           id: "new-todo",
           type: "text",
-          placeholder: "Задание"
+          placeholder: "Задание",
+          value: this.state.newTaskName
         },
         {},
           [
