@@ -62,9 +62,9 @@ class TodoList extends Component {
     
     this.state = {
       tasks: [
-        { title: "Сделать домашку", progress: false },
-        { title: "Сделать практику", progress: false },
-        { title: "Пойти домой", progress: false }
+        { title: "Сделать домашку", progress: false, isDeleteClicked: false },
+        { title: "Сделать практику", progress: false, isDeleteClicked: false },
+        { title: "Пойти домой", progress: false, isDeleteClicked: false }
       ],
       newTaskName: ""
     };
@@ -78,7 +78,7 @@ class TodoList extends Component {
 
   createOnAddTask() {
     return (function() {
-      this.state.tasks.push({ title: this.state.newTaskName, progress: false });
+      this.state.tasks.push({ title: this.state.newTaskName, progress: false, isDeleteClicked: false });
       this.saveState();
       this.update();
     }).bind(this);
@@ -92,10 +92,16 @@ class TodoList extends Component {
   }
 
   createOnDeleteTask(task){
-    return (function() {
-      var index = this.state.tasks.indexOf(task);
-      if (index !== -1) {
-        this.state.tasks.splice(index, 1);
+    return (function(event) {
+      if (!task.isDeleteClicked){
+        task.isDeleteClicked = true;
+        event.target.setAttribute('style', 'background:red;')
+      }
+      else{
+        var index = this.state.tasks.indexOf(task);
+        if (index !== -1) {
+          this.state.tasks.splice(index, 1);
+        }
       }
       this.saveState();
       this.update();
@@ -146,10 +152,24 @@ class Task extends Component {
   }
 
   render() {
+    const input = createElement("input",
+      this.state.progress ? { type: "checkbox", checked: "checked" } : { type: "checkbox" },
+      {},
+      [{eventName: "change", callback: this.createOnTaskChecked()}]
+    );
+
+    const label = createElement("label", {}, this.state.title);
+    if (this.state.progress)
+      label.setAttribute('style', 'color:#aaa;');
+
+    const button = createElement("button", {}, "🗑️", [{eventName: "click", callback: this.OnDelete}]);
+    if (this.state.isDeleteClicked)
+      button.setAttribute('style', 'background:red;');
+    
     return createElement("li", {}, [
-      createElement("input", this.state.progress ? { type: "checkbox", checked: "checked" } : { type: "checkbox" }, {}, [{eventName: "change", callback: this.createOnTaskChecked()}]),
-      createElement("label", {}, this.state.title),
-      createElement("button", {}, "🗑️", [{eventName: "click", callback: this.OnDelete}])
+      input,
+      label,
+      button
     ])
   }
 
